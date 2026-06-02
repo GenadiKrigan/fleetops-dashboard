@@ -11,5 +11,5 @@ export function startSimulation() {
         console.log(`Avaliable idle robots: ${fleetService.idleRobotIds.size}`);
         console.log(`Queued missions waiting: ${fleetService.missionQueue.length}`);
 
-    }, 1000);
+    }, 60000);
 }
