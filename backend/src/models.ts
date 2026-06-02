@@ -8,8 +8,6 @@ export type RobotStatus =
 export type MissionStatus =
     | "queued"
     | "assigned"
-    | "en_route"
-    | "delivering"
     | "completed"
     | "cancelled";
 

@@ -22,6 +22,18 @@ app.get('/api/robots', (req, res) => {
   res.json(fleetService.getAllRobots());
 });
 
+app.get('/api/queue', (req, res) => {
+  res.json({
+    queueLength: fleetService.missionQueue.length,
+    queue: fleetService.missionQueue
+  });
+});
+
+app.get('/api/missions', (req, res) => {
+  res.json(Array.from(fleetService.missions.values()));
+});
+
+
 app.post('/api/robots/:robotId/cancel', (req, res) => {
   const { robotId } = req.params;
   fleetService.cancelMission(robotId);

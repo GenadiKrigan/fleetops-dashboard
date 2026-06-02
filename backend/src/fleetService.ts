@@ -97,7 +97,9 @@ class FleetService {
 
         // Update status
         robot.status = nextState;
-        mission.status = nextState as MissionStatus;
+        if (nextState === "completed") {
+            mission.status = "completed";
+        }
 
         console.log(`[Transition] Robot ${robotId} is now ${nextState}`);
 
