@@ -35,18 +35,18 @@ Once assigned, a mission progresses through the following state machine automati
 
 ## 6. Timing Choices
 The state transitions are governed by `setTimeout` timers with the following intervals:
-* **assigned:** 10 seconds 
-* **en_route:** 20 seconds
-* **delivering:** 15 seconds
-* **completed:** 5 seconds (After 5 seconds, the mission finishes and the robot is freed).
+* **assigned (10s):** Represents the brief time needed to dispatch the task to the robot.
+* **en_route (20s):** The longest phase, mimicking real-world travel time.
+* **delivering (15s):** A medium-length phase representing the actual package handoff.
+* **completed (5s):** A short pause so the operator can clearly see the success state on the dashboard before the robot is freed.
 
 ## 7. Assumptions and Tradeoffs
-* **Time Scale:** The 60-second generation interval paired with the 50-second total lifecycle means the system can easily handle the load without the queue overflowing, assuming no outside interference. 
+* **Time Scale & Demo Pacing:** The 60-second generation interval paired with the 50-second total lifecycle means the system can easily handle the load without the queue overflowing, and it also creates a deliberate 10-second visual gap. This gives the reviewer time to clearly see the robots fully transition from `completed` back to `idle` before the next batch of missions is dispatched.
 * **Cancellation Safety:** I assumed that canceling a mission completely frees the robot for immediate reassignment. In a real-world scenario, a robot might need a "returning to base" state after a cancellation before it can take a new mission.
 * **WebSocket Efficiency:** Instead of the frontend constantly polling the backend for updates, Socket.IO is used to push updates only when a state transition actually occurs, drastically reducing network overhead.
 
 ## 8. In-Memory Storage
-Per the assignment requirements, this system runs entirely in memory. All data is stored using native JavaScript data structures (`Map` for fast robot/mission lookups, `Set` to track idle IDs, and an `Array` for the queue). No external database, filesystem persistence, or cloud storage is utilized.
+Per the assignment requirements, this system runs entirely in memory. All data is stored strictly in-memory within the Node.js server using a standard `Map` for fast robot/mission lookups, a `Set` to track idle IDs, and an `Array` for the queue. This keeps the application lightweight, though it means the robot and mission states will naturally reset whenever the server restarts.
 
 ## 9. Frontend Status Colors
 The dashboard utilizes color-coded badges to represent the robot's current status. This is purely a UI enhancement to help the operations team quickly identify states at a glance without having to read text.
@@ -59,11 +59,8 @@ The dashboard utilizes color-coded badges to represent the robot's current statu
 ---
 
 ## 10. AWS Architecture Plan (Production Readiness)
-If this application were to be deployed to a real AWS production environment, the in-memory limitations would be removed in favor of the following highly scalable architecture:
+If I had to implement this system in a real AWS environment, here is how I would design the architecture: 
 
-* **Frontend Hosting:** The React application would be built into static assets, stored in an **Amazon S3** bucket, and distributed globally via **Amazon CloudFront** for low latency.
-* **Backend Compute:** The Node.js application would be Dockerized and pushed to **Amazon ECR** (Elastic Container Registry). It would be run on **Amazon ECS (Elastic Container Service) with Fargate** for serverless, autoscaling container management.
-* **Persistent Storage:** The in-memory Maps and Sets would be replaced by **Amazon DynamoDB**, a NoSQL database ideal for fast, high-volume state tracking and mission queuing. 
-* **Real-time Updates:** To maintain WebSocket connections at scale, we would use an **Application Load Balancer (ALB)** configured for WebSockets in front of our ECS tasks, or utilize **Amazon API Gateway WebSocket APIs**.
-* **Monitoring & Observability:** All container logs, state transitions, and system health metrics would be routed to **Amazon CloudWatch** to trigger alerts if robot error rates spike.
-* **Infrastructure as Code (IaC):** The entire stack would be defined, version-controlled, and deployed using the **AWS Cloud Development Kit (CDK)** with TypeScript.
+* **Frontend Hosting:** I would host the built React application in an **Amazon S3** bucket. Since Vite compiles the frontend into static files, S3 is a cheap and highly reliable place to serve them from.
+* **Backend Compute (Dockerized):** I would wrap the Node.js Express server in a **Docker container**. This ensures the backend runs exactly the same in production as it does locally. I would then host this container on a basic **Amazon EC2** instance (or a managed service like AWS App Runner) to keep the deployment straightforward and maintainable.
+* **Database / Storage:** To replace the local in-memory `Map` and `Set`, I would use a cloud database like **Amazon DynamoDB** or **Amazon ElastiCache** (Redis). These are extremely fast at key-value lookups, which perfectly mimics how our system tracks robot states and queues missions.

@@ -22,7 +22,7 @@ function getStatusClassName(status: RobotStatus): string {
 }
 
 export function RobotTable({ robots }: RobotTableProps) {
-    // Function to call our new backend endpoint
+    // Function to call new backend endpoint
     const handleCancel = async (robotId: string) => {
         try {
             await fetch(`http://localhost:3001/api/robots/${robotId}/cancel`, {

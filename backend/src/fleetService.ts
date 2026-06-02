@@ -50,12 +50,11 @@ class FleetService {
         if (this.idleRobotIds.size > 0) {
             const robotId = this.idleRobotIds.values().next().value; //Get the first available idle robot
             if (robotId) {
-                this.idleRobotIds.delete(robotId); //Remove from idle pool
+                this.idleRobotIds.delete(robotId);
                 this.assignMissionToRobot(robotId, mission);
             }
         } else {
             //No idle robots available, push to wait queue
-            mission.status = "queued";
             this.missionQueue.push(mission);
         }
         broadcastFleetUpdate();
@@ -70,7 +69,6 @@ class FleetService {
         mission.robotId = robotId;
         console.log(`[Assign] Robot ${robotId} assigned to Mission ${mission.id}`);
 
-        // Start the lifecycle: assigned lasts 10 seconds before moving to en_route
         this.scheduleNextState(robotId, mission.id, "en_route", 10000);
         broadcastFleetUpdate();
     }
@@ -88,7 +86,7 @@ class FleetService {
         const mission = this.missions.get(missionId);
 
         if (!robot || !mission) return;
-        if (mission.status === "cancelled") return; // Safety check
+        if (mission.status === "cancelled") return;
 
         if (nextState === "finish") {
             this.finishMission(robotId);
@@ -139,18 +137,15 @@ class FleetService {
     public cancelMission(robotId: string) {
         const robot = this.robots.get(robotId);
 
-        // If the robot doesn't exist or isn't on a mission, do nothing
         if (!robot || !robot.currentMissionId) return;
 
         const missionId = robot.currentMissionId;
         const mission = this.missions.get(missionId);
 
-        // 1. Mark the mission as cancelled
         if (mission) {
             mission.status = "cancelled";
         }
 
-        // 2. Stop the pending lifecycle timers so it doesn't continue updating
         const timer = this.activeTimers.get(robotId);
         if (timer) {
             clearTimeout(timer);
@@ -159,10 +154,8 @@ class FleetService {
 
         console.log(`[Cancel] Mission ${missionId} cancelled for Robot ${robotId}`);
 
-        // 3. Clear the robot's current mission
         robot.currentMissionId = null;
 
-        // 4. Check the queue or return to idle
         if (this.missionQueue.length > 0) {
             const nextMission = this.missionQueue.shift()!;
             console.log(`[Queue] Robot ${robotId} immediately taking queued Mission ${nextMission.id} after cancellation`);
@@ -172,7 +165,6 @@ class FleetService {
             this.idleRobotIds.add(robotId);
             console.log(`[Idle] Robot ${robotId} is back to idle after cancellation.`);
 
-            // We must broadcast the update manually here since it's going idle
             broadcastFleetUpdate();
         }
     }

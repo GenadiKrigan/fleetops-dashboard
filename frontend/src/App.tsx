@@ -8,13 +8,13 @@ function App() {
   const [robots, setRobots] = useState<Robot[]>([]);
 
   useEffect(() => {
-    // 1. Fetch initial state so the page isn't blank on load
+    //Fetch initial state so the page isn't blank on load
     fetch('http://localhost:3001/api/robots')
       .then((res) => res.json())
       .then((data) => setRobots(data))
       .catch((err) => console.error("Failed to fetch initial robots:", err));
 
-    // 2. Listen for the real-time socket updates
+    //Listen for the real-time socket updates
     socket.on('fleet:update', (updatedRobots: Robot[]) => {
       setRobots(updatedRobots);
     });
