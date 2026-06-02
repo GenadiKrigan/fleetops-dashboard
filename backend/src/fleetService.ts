@@ -133,6 +133,47 @@ class FleetService {
         }
         broadcastFleetUpdate();
     }
+
+    public cancelMission(robotId: string) {
+        const robot = this.robots.get(robotId);
+
+        // If the robot doesn't exist or isn't on a mission, do nothing
+        if (!robot || !robot.currentMissionId) return;
+
+        const missionId = robot.currentMissionId;
+        const mission = this.missions.get(missionId);
+
+        // 1. Mark the mission as cancelled
+        if (mission) {
+            mission.status = "cancelled";
+        }
+
+        // 2. Stop the pending lifecycle timers so it doesn't continue updating
+        const timer = this.activeTimers.get(robotId);
+        if (timer) {
+            clearTimeout(timer);
+            this.activeTimers.delete(robotId);
+        }
+
+        console.log(`[Cancel] Mission ${missionId} cancelled for Robot ${robotId}`);
+
+        // 3. Clear the robot's current mission
+        robot.currentMissionId = null;
+
+        // 4. Check the queue or return to idle
+        if (this.missionQueue.length > 0) {
+            const nextMission = this.missionQueue.shift()!;
+            console.log(`[Queue] Robot ${robotId} immediately taking queued Mission ${nextMission.id} after cancellation`);
+            this.assignMissionToRobot(robotId, nextMission);
+        } else {
+            robot.status = "idle";
+            this.idleRobotIds.add(robotId);
+            console.log(`[Idle] Robot ${robotId} is back to idle after cancellation.`);
+
+            // We must broadcast the update manually here since it's going idle
+            broadcastFleetUpdate();
+        }
+    }
 }
 
 export const fleetService = new FleetService();

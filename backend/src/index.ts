@@ -22,6 +22,12 @@ app.get('/api/robots', (req, res) => {
   res.json(fleetService.getAllRobots());
 });
 
+app.post('/api/robots/:robotId/cancel', (req, res) => {
+  const { robotId } = req.params;
+  fleetService.cancelMission(robotId);
+  res.json({ success: true, message: `Mission cancelled for ${robotId}` });
+});
+
 server.listen(port, () => {
   console.log(`Backend server is running on http://localhost:${port}`);
   startSimulation();

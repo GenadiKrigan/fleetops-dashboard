@@ -4,7 +4,6 @@ interface RobotTableProps {
     robots: Robot[];
 }
 
-// Helper function to map statuses to our CSS classes
 function getStatusClassName(status: RobotStatus): string {
     switch (status) {
         case "idle":
@@ -23,6 +22,17 @@ function getStatusClassName(status: RobotStatus): string {
 }
 
 export function RobotTable({ robots }: RobotTableProps) {
+    // Function to call our new backend endpoint
+    const handleCancel = async (robotId: string) => {
+        try {
+            await fetch(`http://localhost:3001/api/robots/${robotId}/cancel`, {
+                method: 'POST',
+            });
+        } catch (error) {
+            console.error("Failed to cancel mission:", error);
+        }
+    };
+
     return (
         <div className="table-container">
             <table>
@@ -39,7 +49,6 @@ export function RobotTable({ robots }: RobotTableProps) {
                         <tr key={robot.id}>
                             <td>{robot.id}</td>
                             <td>
-                                {/* Apply the dynamic CSS class here */}
                                 <span className={getStatusClassName(robot.status)}>
                                     {robot.status.replace('_', ' ').toUpperCase()}
                                 </span>
@@ -48,7 +57,7 @@ export function RobotTable({ robots }: RobotTableProps) {
                             <td>
                                 <button
                                     disabled={robot.status === 'idle'}
-                                    onClick={() => alert(`Cancel functionality for ${robot.id} coming in Phase 7!`)}
+                                    onClick={() => handleCancel(robot.id)}
                                 >
                                     Cancel
                                 </button>
