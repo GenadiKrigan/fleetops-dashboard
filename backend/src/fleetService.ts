@@ -1,4 +1,5 @@
 import { Robot, Mission, RobotStatus, MissionStatus } from './models';
+import { broadcastFleetUpdate } from './socket';
 
 class FleetService {
     public robots: Map<string, Robot> = new Map();
@@ -57,6 +58,7 @@ class FleetService {
             mission.status = "queued";
             this.missionQueue.push(mission);
         }
+        broadcastFleetUpdate();
     }
 
     //Lifecycle logic
@@ -70,6 +72,7 @@ class FleetService {
 
         // Start the lifecycle: assigned lasts 10 seconds before moving to en_route
         this.scheduleNextState(robotId, mission.id, "en_route", 10000);
+        broadcastFleetUpdate();
     }
 
     private scheduleNextState(robotId: string, missionId: string, nextState: RobotStatus | "finish", delayMs: number) {
@@ -106,6 +109,7 @@ class FleetService {
         } else if (nextState === "completed") {
             this.scheduleNextState(robotId, missionId, "finish", 5000);
         }
+        broadcastFleetUpdate();
     }
 
     private finishMission(robotId: string) {
@@ -127,6 +131,7 @@ class FleetService {
             this.idleRobotIds.add(robotId);
             console.log(`[Idle] Robot ${robotId} is back to idle.`);
         }
+        broadcastFleetUpdate();
     }
 }
 
